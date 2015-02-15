@@ -1,0 +1,10 @@
+#
+# $Id$
+#
+
+#
+# Forward to build system
+#
+
+include build/Makefile
+

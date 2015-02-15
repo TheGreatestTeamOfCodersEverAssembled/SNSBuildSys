@@ -1,0 +1,179 @@
+#!/bin/bash
+#
+# $Id$
+#
+#
+
+# TODO: process args
+
+os=`uname`
+arch=`uname -m`
+
+case $os in
+Linux)
+	case $arch in
+	i686|i386)
+		platform=linux.i386
+		;;
+	x86_64)
+		platform=linux.x86_64
+		;;
+	*)
+	        echo "$0: architecture $arch for $os not supported"
+	        exit 1
+	        ;;
+	esac
+	;;
+
+Darwin)
+	case $arch in
+	"Power Macintosh")
+		platform=macosx.ppc
+		;;
+# Coming soon to a theatre near you:
+	i686|i386)
+		platform=macosx.i386
+		;;
+	x86_64)
+		platform=macosx.x86_64
+		;;
+	*)
+	        echo "$0: architecture $arch for $os not supported"
+	        exit 1
+	        ;;
+	esac
+	;;
+*)
+	echo "$0: platform `uname` not supported"
+	exit 1
+	;;
+esac
+
+echo "Using platform configuration $platform"
+
+cfgtemp=config.tmp
+
+cat > $cfgtemp <<EOF
+#
+# config.mk
+#
+# Created at: `date`  
+#         by: \$Id\$
+#
+EOF
+
+cat build/Version >> $cfgtemp
+
+cat >> $cfgtemp <<EOF
+
+TOPVAR=$TOPVAR
+
+# Package variables
+${TOPVAR}_CONF=${!TOPVAR}
+EOF
+
+if [ $use_root = '1' ]; then
+   echo "ROOTSYS_CONF=$ROOTSYS" >> $cfgtemp
+fi
+
+if [ $use_cernlib = '1' ]; then
+   echo "CERNLIB_CONF=$CERNLIB" >> $cfgtemp
+fi
+
+if [ $use_pqxx = '1' ]; then
+   echo "PQXX_CONF=$PQXXLIB" >> $cfgtemp
+fi
+
+
+cat >> $cfgtemp <<EOF
+
+INCCOPYCMD=$INCCOPYCMD
+CCBASE=$CCBASE
+CXXBASE=$CXXBASE
+F77BASE=$F77BASE
+GCCVERSION=$GCCVERSION
+ROOTMAPDEPS=$ROOTMAPDEPS
+
+#
+# Main package
+#
+LIBDIR=${!TOPVAR}/lib
+
+# Compiler and Linker configuration
+include build/config/$platform.mk
+
+EOF
+
+if [ $use_root = '1' ]; then
+   cat >> $cfgtemp <<EOF
+
+#
+# ROOT configuration
+#
+ROOTLIB:=`root-config --libdir`
+ROOTINC:=`root-config --incdir`
+
+EOF
+fi
+
+#
+# Check external packages
+#
+cat >> $cfgtemp <<EOF
+
+#
+# Validate external package configuration
+#
+ifneq (\$(${TOPVAR}_CONF),)
+ifneq (\$(${TOPVAR}),\$(${TOPVAR}_CONF))
+dummy:=\$(error \$\$${TOPVAR} has changed, please run './configure' or set correctly)
+endif
+endif
+
+EOF
+
+if [ $use_root = '1' ]; then
+cat >> $cfgtemp <<EOF
+ifneq (\$(ROOTSYS_CONF),)
+ifneq (\$(ROOTSYS),\$(ROOTSYS_CONF))
+dummy:=\$(error \$\$ROOTSYS has changed, please run './configure' or set correctly)
+endif
+endif
+
+EOF
+
+fi
+
+if [ $use_cernlib = '1' ]; then
+cat >> $cfgtemp <<EOF
+ifneq (\$(CERNLIB_CONF),)
+ifneq (\$(CERNLIB),\$(CERNLIB_CONF))
+dummy:=\$(error \$\$CERNLIB has changed, please run './configure' or set correctly)
+endif
+endif
+
+EOF
+fi
+
+if [ $use_pqxx = '1' ]; then
+cat >> $cfgtemp <<EOF
+ifneq (\$(PQXX_CONF),)
+ifneq (\$(PQXXLIB),\$(PQXX_CONF))
+dummy:=\$(error \$\$PQXXLIB has changed, please run './configure' or set correctly)
+endif
+endif
+
+EOF
+fi
+
+
+#
+# Done
+#
+
+mv -f $cfgtemp config.mk
+
+# for the moment, make sure we rebuild enough in case root has changed
+
+make clean
+make printmods

@@ -1,0 +1,8 @@
+*.d
+G__*.h
+G__*.cxx
+G__*.d
+Module.mk
+*.o
+*.i
+*.rootmap

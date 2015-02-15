@@ -1,0 +1,231 @@
+# $Id$
+#
+# Module.mk -- Makefile for AAAA
+# (don't manually edit this file)
+#
+
+MODDIR := AAAA
+
+AAAAS  := $(filter-out AAAA/G__%,$(wildcard AAAA/*.cxx))
+AAAAF  := $(wildcard AAAA/*.f)
+
+AAAAH  := $(filter-out AAAA/%LinkDef.h,$(wildcard AAAA/*.h*))
+AAAAH  := $(filter-out AAAA/G__%.h,$(AAAAH))
+AAAAI  := $(wildcard AAAA/*.inc)
+
+AAAALIBNAME := lib/libAAAA
+AAAALIB     := $(AAAALIBNAME).$(SOEXT)
+
+AAAAPCM     := $(AAAALIBNAME)_rdict.pcm
+
+AAAAPAR     := par/AAAA.par
+AAAAPARINIT := $(shell if test -e "AAAA/AAAA_setup.C"; then echo "AAAA/AAAA_setup.C"; else echo ""; fi)
+
+AAAAMAPNAME := AAAA.$(ROOTMAPEXT)
+AAAAMAP     := AAAA/$(AAAAMAPNAME)
+
+AAAAOMOD        = $(foreach mm,$(patsubst %,%O,$(AAAAMODULES)),$($(mm)))
+AAAAHMOD        = $(foreach mm,$(patsubst %,%H,$(AAAAMODULES)),$($(mm)))
+AAAAIMOD        = $(foreach mm,$(patsubst %,%I,$(AAAAMODULES)),$($(mm)))
+AAAALIBEXTRAMOD = $(foreach mm,$(patsubst %,%LIBEXTRA,$(AAAAMODULES)),$($(mm)))
+AAAAPAREXTRAMOD = $(foreach mm,$(patsubst %,%PAREXTRA,$(AAAAMODULES)),$($(mm)))
+
+#
+# include module-dependent definitions
+#
+include AAAA/AAAA.mk
+
+
+# first expand any command subsitutions -- ROOTMAPDEPS comes from 'configure'
+AAAALIBEXTRASOS := $(shell echo $(AAAA$(ROOTMAPDEPS)))
+ifeq ($(ROOTMAPDEPS),LIBEXTRA)
+# only want the libraries
+AAAALIBEXTRASOS := $(filter -l%,$(AAAALIBEXTRASOS))
+# change -lLIB to LIB.so
+AAAALIBEXTRASOS := $(patsubst -l%,lib%.$(SOEXT),$(AAAALIBEXTRASOS))
+else
+ifeq ($(ROOTMAPDEPS),LIBDEP)
+# add the .so
+AAAALIBEXTRASOS := $(patsubst %,lib%.$(SOEXT),$(AAAALIBEXTRASOS))
+else
+$(error Invalid ROOTMAPDEPS=$(ROOTMAPDEPS))
+endif
+endif
+
+# derive source dependent output
+AAAAO   := $(AAAAS:.cxx=.o) $(if $(wildcard AAAA/AAAALinkDef.h),AAAA/G__AAAA.o) $(AAAAF:.f=.o)
+AAAADEP := $(AAAAO:.o=.d)
+
+ifeq ($(AAAAMAPLIB),)
+AAAAMAPLIB := $(AAAALIB)
+else
+AAAAMAPLIB := lib/$(AAAAMAPLIB)
+endif
+
+# used in the main Makefile
+ALLHDRS     += $(patsubst AAAA/%.h,include/%.h,$(AAAAH))
+ALLHDRS     += $(patsubst AAAA/%.hxx,include/%.hxx,$(AAAAH))
+ALLHDRS     += $(patsubst AAAA/%.inc,include/%.inc,$(AAAAI))
+ifeq ($(AAAANOLIB),)
+ALLLIBS	    += $(AAAALIB)
+ALLPARS     += $(AAAAPAR)
+ALLMAPS     += $(if $(wildcard AAAA/AAAALinkDef.h),$(AAAAMAP))
+endif
+
+# include all dependency files
+INCLUDEFILES += $(AAAADEP)
+
+
+#
+# Populate central include dir
+#
+include/%.h:    AAAA/%.h
+		$(INCCOPYCMD) $($(TOPVAR))/$< $($(TOPVAR))/$@
+
+include/%.hxx:  AAAA/%.hxx
+		$(INCCOPYCMD) $($(TOPVAR))/$< $($(TOPVAR))/$@
+
+include/%.inc:  AAAA/%.inc
+		$(INCCOPYCMD) $($(TOPVAR))/$< $($(TOPVAR))/$@
+
+
+#
+# Targets that do not correspond to a file
+#
+
+.PHONY: libs AAAA-libs pars AAAA-pars clean AAAA-clean
+
+
+ifeq ($(AAAANOLIB),)
+libs:: AAAA-libs
+
+AAAA-libs: $(AAAALIB)
+
+pars:: AAAA-pars
+
+AAAA-pars: $(AAAAPAR)
+endif
+
+extras:: $(AAAAEXTRAS)
+
+clean:: AAAA-clean
+
+ifeq ($(IsRootSix),1)
+AAAA-clean: $(AAAALOCALCLEAN)
+	rm -f $(AAAALIB) $(AAAAPAR) $(AAAAO) $(AAAADEP) AAAA/G__AAAA.h AAAA/G__AAAA.cxx AAAA/AAAA.$(ROOTMAPEXT) $(AAAAPCM) $(AAAALIBNAME).$(ROOTMAPEXT)
+else
+AAAA-clean: $(AAAALOCALCLEAN)
+	rm -f $(AAAALIB) $(AAAAPAR) $(AAAAO) $(AAAADEP) AAAA/G__AAAA.h AAAA/G__AAAA.cxx AAAA/AAAA.$(ROOTMAPEXT)
+endif
+
+ifeq ($(AAAANOLIB),)
+AAAA-all: AAAA-libs AAAA-pars $(AAAAEXTRAS)
+else
+AAAA-all: $(AAAAEXTRAS)
+endif
+
+AAAA:: AAAA-all
+
+ifneq ($(AAAAF),)
+AAAALIBEXTRA += $(F77LIBS)
+endif
+
+ifeq ($(AAAANOLIB),)
+$(AAAALIB): $(AAAALIBDEP) $(AAAAO) $(AAAAOMOD) AAAA/Module.mk AAAA/AAAA.mk
+	@echo "Making libAAAA.$(SOEXT)"
+	@$(MAKELIB) $(PLATFORM) $(LD) "$(LDFLAGS)" \
+	"$(SOFLAGS)" libAAAA.$(SOEXT) $@ "$(AAAAO) $(AAAAOMOD)" \
+	"$(AAAALIBEXTRA) $(AAAALIBEXTRAMOD)"
+
+
+$(AAAAPAR): $(AAAALIB) $(AAAAH) $(AAAAI) $(AAAAPAREXTRA) $(AAAAPAREXTRAMOD) $(AAAAPARINIT)
+	@if test -e "$(AAAAPARINIT)"; then \
+	        echo "Making $(AAAAPAR) using $(AAAAPARINIT)"; \
+         else echo "Making $(AAAAPAR)" ; fi
+	@$(MAKEPAR) $(AAAAPAR) $(AAAALIB) "$(AAAAH) $(AAAAI) $(AAAAHMOD) $(AAAAIMOD)" \
+	"$(AAAAPAREXTRA) $(AAAAPAREXTRAMOD)" AAAA/AAAA_setup.C
+else
+$(AAAALIB): $(AAAALIBDEP) $(AAAAO) $(AAAAOMOD) AAAA/Module.mk AAAA/AAAA.mk
+	@echo "Not making libAAAA.$(SOEXT)"
+
+$(AAAAPAR): $(AAAALIB) $(AAAAH) $(AAAAI) $(AAAAPAREXTRA) $(AAAAPAREXTRAMOD) $(AAAAPARINIT)
+	@echo "Not making $(AAAAPAR)"
+endif
+
+#
+# Dictionary rule
+#
+
+AAAADH := $(patsubst %,AAAA/%,$(AAAADH))
+
+ifeq ($(IsRootSix),1)
+AAAA/G__AAAA.h AAAA/G__AAAA.cxx: config.mk $(ROOTCINT) AAAA/AAAALinkDef.h $(AAAADH)
+		$(ROOTCINT) -f AAAA/G__AAAA.cxx -rml $(AAAALIB) -rmf $(AAAALIBNAME).$(ROOTMAPEXT) -s $(AAAALIB) $(AAAACF) $(CPPFLAGS) $(AAAADH) $(AAAADHEXTRA) \
+		AAAA/AAAALinkDef.h
+else
+AAAA/G__AAAA.h AAAA/G__AAAA.cxx: config.mk $(ROOTCINT) AAAA/AAAALinkDef.h $(AAAAD	        $(ROOTCINT) -f AAAA/G__AAAA.cxx -c $(AAAACF) $(CPPFLAGS) $(AAAADH) $(AAAADHEXTRA) \
+		AAAA/AAAALinkDef.h
+endif
+
+
+#
+# Dependency generation rules
+#
+
+AAAA/G__%.d: AAAA/G__%.cxx
+	$(MAKEDEP) $@ "$(CXXFLAGS) $(AAAACXXFLAGSEXTRA) -I$(CINTDIR)/lib/prec_stl -I$(CINTDIR)/stl" $< > $@
+
+AAAA/%.d: AAAA/%.cxx
+	$(MAKEDEP) $@ "$(CXXFLAGS) $(AAAACXXFLAGSEXTRA)" $< > $@
+
+AAAA/%.d: AAAA/%.c
+	$(MAKEDEP) $@ "$(CFLAGS) $(AAAACXXFLAGSEXTRA)" $< > $@
+
+AAAA/%.d: AAAA/%.f
+	$(F77DEP) $< > $@
+
+
+#
+# Local compilation rule, automatically enable when needed
+#
+
+ifneq ($(AAAACXXFLAGSEXTRA),)
+# Special rule for dictionaries
+AAAA/G__%.o: AAAA/G__%.cxx
+	$(CXX) $(NOOPT) -I. $(CXXFLAGS) $(AAAACXXFLAGSEXTRA) -o $@ -c $<
+
+AAAA/%.o: AAAA/%.cxx
+	$(CXX) $(OPT) $(CXXFLAGS) $(AAAACXXFLAGSEXTRA) -o $@ -c $<
+endif
+
+ifneq ($(AAAACFLAGSEXTRA),)
+AAAA/%.o: AAAA/%.c
+	$(CC) $(OPT) $(CFLAGS) $(AAAACFLAGSEXTRA) -o $@ -c $<
+endif
+
+ifneq ($(AAAAF77FLAGSEXTRA),)
+AAAA/%.o: AAAA/%.f
+	$(F77) $(F77OPT) $(F77FLAGS) $(AAAAF77FLAGSEXTRA) -o $@ -c $<
+endif
+
+AAAA-map: $(AAAAMAP)
+
+ifeq ($(IsRootSix),0) # NOT root6
+ifeq ($(AAAANOLIB),)
+$(AAAAMAP): AAAA/AAAA.mk AAAA/AAAALinkDef.h
+	$(MAKEMAP) -o AAAA/AAAA.$(ROOTMAPEXT) -l $(AAAAMAPLIB) -d $(AAAALIBEXTRASOS) -c AAAA/AAAALinkDef.h
+else
+$(AAAAMAP): AAAA/AAAA.mk AAAA/AAAALinkDef.h
+	@echo "Not making $(AAAAMAP)"
+endif
+else
+$(AAAAMAP):
+endif
+
+#
+# Local Variables:
+# mode:Makefile
+# End:
+#
+# vim: set filetype=Makefile 
+#

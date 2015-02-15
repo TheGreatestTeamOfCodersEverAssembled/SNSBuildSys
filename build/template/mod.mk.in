@@ -1,0 +1,12 @@
+#
+# $Id$
+#
+# See $TOPVAR/build/template/module.mk.example for a list
+# of all possible variables and their meaning.
+# 
+
+AAAADH := \
+	TMyClass.h \
+
+AAAALIBEXTRA := \
+	`root-config --glibs` \

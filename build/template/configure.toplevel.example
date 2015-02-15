@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# $Id$
+#
+
+# Name of variable holding the top of our tree (like ROOTSYS)
+export TOPVAR=__CHANGE__
+
+# Check for availability of ROOT
+export use_root=0
+
+# Check for availabiltiy of the CERN Library
+export use_cernlib=0
+
+
+#
+# Forward to build system
+#
+
+exec build/configure "$@"

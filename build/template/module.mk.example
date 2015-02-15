@@ -1,0 +1,86 @@
+#
+# $Id$
+#
+
+#
+# Each module has an (optional) "_modulename_".mk file that allows
+# the build process of that module to be configured or even modified
+# This example file documents the parameters that are available
+#
+
+
+# _modulename_DH -- "Dictionary include files" 
+# 
+# List of includefiles used to generate the CINT dictionary.
+#_modulename_DH :=
+
+# _modulename_DHEXTRA -- "External dictionary include file"
+# 
+# List of includefiles used to generate the CINT dictionary
+# that are not part of this module.
+#_modulename_DHEXTRA :=
+
+# _modulename_CF -- "CINT flags"
+# 
+# Extra flags to pass to rootcint. Mainly used to add "-p".
+#_modulename_CF := -p
+
+# _modulename_LIBEXTRA -- "Extra libraries"
+# 
+# List of extra libraries to be used when linking the shared library
+# for this module.
+#_modulename_LIBEXTRA := 
+
+# _modulename_LIBDEP -- "Defines library dependencies"
+#
+# This specifies the library dependencies which are
+# used to compile and link the libs in the right order.
+#_modulename_LIBDEP=
+
+# _modulename_PAREXTRA -- "Extra files for PAR"
+# 
+# List of files to be added to the PAR file for this module.
+#_modulename_PAREXTRA :=
+
+# _modulename_MODULES -- "Modules"
+# 
+# List of modules to be included in this module.
+#_modulename_MODULES := 
+
+# _modulename_CXXFLAGSEXTRA -- "Extra C++ flags"
+# 
+# Extra flags to be added to the C++ compilation command for
+# files in this this module.
+#_modulename_CXXFLAGSEXTRA =
+
+# _modulename_CFLAGSEXTRA -- "Extra C flags"
+# 
+# Extra flags to be added to the C compilation command for
+# files in this this module.
+#_modulename_CFLAGSEXTRA = 
+
+# _modulename_F77FLAGSEXTRA -- "Extra f77 flags"
+# 
+# Extra flags to be added to the f77 compilation command for
+# files in this this module.
+#_modulename_F77FLAGSEXTRA =
+
+# _modulename_EXTRAS -- "Extra local rules"
+#
+# This specifies extra local rules which will be
+# appended to the extras rules in the global Makefile
+# and therefore also added to the default target.
+#_modulename_EXTRAS =
+
+# _modulename_LOCALCLEAN -- "Extra rule for local cleaning"
+#
+# This specifies extra local rules which are added 
+# to the clean target of the module.
+#_modulename_LOCALCLEAN=
+
+# _modulename_NOLIB -- "Don't build library for this module"
+#
+# If defined, the shared object library & par files will not
+# be generated for this module.
+#_modulename_NOLIB=
+

@@ -1,0 +1,40 @@
+#!/bin/sh
+
+#
+# $Id$
+#
+# Add a package ("module" in the build system) and create a skeleton directory
+#
+
+if [ $# -ne 1 ]; then
+   echo "Usage: $0 [package-name]" >&2
+   exit 1
+fi
+
+mod=$1
+
+if [ -e $mod ]; then
+   echo "$0: package '$mod' exists" >&2
+   exit 1
+else
+   echo "$0: adding package '$mod'" >&2
+fi
+
+mkdir $mod
+
+TOPVAR=`sed -n '/TOPVAR=/s/TOPVAR=//p' < config.mk`
+
+sed "s/TOPVAR/$TOPVAR/g" < build/template/mod.mk.in >$mod/$mod.mk
+sed -i "s/AAAA/$mod/g" $mod/$mod.mk
+
+cp build/template/moduleLinkDef.h.example $mod/${mod}LinkDef.h
+
+#cp build/.cvsignore $mod/
+
+modlist=`grep "^\s*${mod}\s*$" Modules`
+if [ -z $modlist ]; then
+echo "$0: remember to add '$mod' to the package list ('Modules' file)."
+else
+echo "$0: package '$mod' already appears in package list ('Modules' file)."
+fi
+

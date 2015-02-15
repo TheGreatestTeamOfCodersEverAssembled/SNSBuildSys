@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# $Id$
+#
+
+export TOPVAR=SNS
+
+# toggle whether or not to use each external package
+export use_root=1
+export use_cernlib=1
+export use_pqxx=0
+
+# the include copy or link command (ln -sf || cp -f)
+#export INCCOPYCMD="cp -f"
+export INCCOPYCMD="ln -sf"
+
+# specify compilers here. unspecified will default to something
+# appropriate and standard for the OS
+#export CCBASE=clang
+#export CXXBASE=clang++
+# note: on macos, the F77BASE is currently ignored. changes to this
+# compiler will require modifying the appropriate $SNS/build/config/ file
+#export F77BASE=g77
+# if version num is in compiler executable name (same for all compilers)
+#export GCCVERSION=
+
+# which module variable (i.e. LIBEXTRA or LIBDEP) to use in order
+# to build the rootmap for the module. LIBEXTRA should be safest,
+# but will give problems if it includes unused libraries that are
+# not in $LD_LIBRARY_PATH. LIBDEP will only include libraries from this
+# package.
+export ROOTMAPDEPS=LIBDEP
+
+#
+# Forward to build system
+#
+build/fixupTam
+exec build/configure "$@"
