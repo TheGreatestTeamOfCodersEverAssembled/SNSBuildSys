@@ -9,6 +9,8 @@ The subdirectory should be added to the "Modules" file, in the appropriate locat
 
 Users can edit the main "configure" file to set a few options. Most importantly is the "TOPVAR" variable, which must reference an existing environment variable that points to the location of the build system. For example, if TOPVAR=SNS and the build system is located in $HOME/sns, then the user should have an environment variable $SNS = $HOME/sns.
 
+Operating system specific options are set in the build/config/ files. For example, build/config/macos.x86_64.mk and build/config/linux.i386.mk contain the options specific to a 64-bit OSX and 32-bit Linux OS system, respectively.
+
 New features implement since the PHOBOS build system:
 
  * Ability to set "use_root=0" in configure and still build packages that don't depend on ROOT. However, the build system is not (yet) set up to run on a computer that does not have ROOT installed at all.
